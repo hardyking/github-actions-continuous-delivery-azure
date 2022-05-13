@@ -7,7 +7,7 @@ on:
 
 env:
   IMAGE_REGISTRY_URL: krisacr.azurecr.cn
-  AZURE_WEBAPP_NAME: hardyking-ttt-app
+  AZURE_WEBAPP_NAME: kris-app-prod
 
 jobs:
   build:
@@ -59,11 +59,11 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
           environment: "AzureChinaCloud"
 
-      - uses: azure/docker-login@v1
-        with:
-          login-server: ${{ env.IMAGE_REGISTRY_URL }}
-          username: ${{ secrets.REGISTRY_USERNAME }}
-          password: ${{ secrets.REGISTRY_PASSWORD }}
+#       - uses: azure/docker-login@v1
+#         with:
+#           login-server: ${{ env.IMAGE_REGISTRY_URL }}
+#           username: ${{ secrets.REGISTRY_USERNAME }}
+#           password: ${{ secrets.REGISTRY_PASSWORD }}
 
       - name: Deploy web app container
         uses: azure/webapps-deploy@v2
