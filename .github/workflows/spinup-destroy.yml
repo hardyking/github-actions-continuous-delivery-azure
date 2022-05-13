@@ -5,18 +5,13 @@ on:
     types: [labeled]
 
 env:
-  #PACKAGES_TOKEN: ${{secrets.PACKAGES_TOKEN}}
   AZURE_RESOURCE_GROUP: cd-with-actions
-  AZURE_APP_PLAN: actions-ttt-deployment
+  AZURE_APP_PLAN_PROD: kris-deployment-prod
+  AZURE_APP_PLAN_QA: kris-deployment-qa
+  AZURE_WEBAPP_NAME_PROD: kris-app-prod
+  AZURE_WEBAPP_NAME_QA: kris-app-qa
   AZURE_LOCATION: '"China North 2"'
   IMAGE_REGISTRY_URL: krisacr.azurecr.cn
-  #################################################
-  ### USER PROVIDED VALUES ARE REQUIRED BELOW   ###
-  #################################################
-  #################################################
-  ### REPLACE USERNAME WITH GH USERNAME         ###
-  AZURE_WEBAPP_NAME: hardyking-ttt-app
-  #################################################
 
 jobs:
   setup-up-azure-resources:
@@ -39,20 +34,35 @@ jobs:
         run: |
           az group create --location ${{env.AZURE_LOCATION}} --name ${{env.AZURE_RESOURCE_GROUP}} --subscription ${{secrets.AZURE_SUBSCRIPTION_ID}}
 
-      - name: Create Azure app service plan
+      - name: Create Azure PROD app service plan
         if: success()
         run: |
-          az appservice plan create --resource-group ${{env.AZURE_RESOURCE_GROUP}} --name ${{env.AZURE_APP_PLAN}} --is-linux --sku B1 --subscription ${{secrets.AZURE_SUBSCRIPTION_ID}}
+          az appservice plan create --resource-group ${{env.AZURE_RESOURCE_GROUP}} --name ${{env.AZURE_APP_PLAN_PROD}} --is-linux --sku B1 --subscription ${{secrets.AZURE_SUBSCRIPTION_ID}}
 
-      - name: Create webapp resource
+      - name: Create PROD webapp resource
         if: success()
         run: |
-          az webapp create --resource-group ${{ env.AZURE_RESOURCE_GROUP }} --plan ${{ env.AZURE_APP_PLAN }} --name ${{ env.AZURE_WEBAPP_NAME }}  --deployment-container-image-name nginx --subscription ${{secrets.AZURE_SUBSCRIPTION_ID}}
+          az webapp create --resource-group ${{ env.AZURE_RESOURCE_GROUP }} --plan ${{ env.AZURE_APP_PLAN_PROD }} --name ${{ env.AZURE_WEBAPP_NAME_PROD }}  --deployment-container-image-name nginx --subscription ${{secrets.AZURE_SUBSCRIPTION_ID}}
 
-      - name: Configure webapp to use GitHub Packages
+      - name: Configure PROD webapp to use Azure registry
         if: success()
         run: |
-          az webapp config container set --docker-custom-image-name nginx --docker-registry-server-password ${{ secrets.REGISTRY_PASSWORD }} --docker-registry-server-url ${{ env.IMAGE_REGISTRY_URL }} --docker-registry-server-user ${{ secrets.REGISTRY_USERNAME }} --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group ${{ env.AZURE_RESOURCE_GROUP }} --subscription ${{secrets.AZURE_SUBSCRIPTION_ID}}
+          az webapp config container set --docker-custom-image-name nginx --docker-registry-server-password ${{ secrets.REGISTRY_PASSWORD }} --docker-registry-server-url ${{ env.IMAGE_REGISTRY_URL }} --docker-registry-server-user ${{ secrets.REGISTRY_USERNAME }} --name ${{ env.AZURE_WEBAPP_NAME_PROD }} --resource-group ${{ env.AZURE_RESOURCE_GROUP }} --subscription ${{secrets.AZURE_SUBSCRIPTION_ID}}
+
+      - name: Create Azure QA app service plan
+        if: success()
+        run: |
+          az appservice plan create --resource-group ${{env.AZURE_RESOURCE_GROUP}} --name ${{env.AZURE_APP_PLAN_QA}} --is-linux --sku B1 --subscription ${{secrets.AZURE_SUBSCRIPTION_ID}}
+
+      - name: Create QA webapp resource
+        if: success()
+        run: |
+          az webapp create --resource-group ${{ env.AZURE_RESOURCE_GROUP }} --plan ${{ env.AZURE_APP_PLAN_QA }} --name ${{ env.AZURE_WEBAPP_NAME_QA }}  --deployment-container-image-name nginx --subscription ${{secrets.AZURE_SUBSCRIPTION_ID}}
+
+      - name: Configure QA webapp to use Azure registry
+        if: success()
+        run: |
+          az webapp config container set --docker-custom-image-name nginx --docker-registry-server-password ${{ secrets.REGISTRY_PASSWORD }} --docker-registry-server-url ${{ env.IMAGE_REGISTRY_URL }} --docker-registry-server-user ${{ secrets.REGISTRY_USERNAME }} --name ${{ env.AZURE_WEBAPP_NAME_QA }} --resource-group ${{ env.AZURE_RESOURCE_GROUP }} --subscription ${{secrets.AZURE_SUBSCRIPTION_ID}}
 
   destroy-azure-resources:
     runs-on: ubuntu-latest
@@ -73,4 +83,3 @@ jobs:
         if: success()
         run: |
           az group delete --name ${{env.AZURE_RESOURCE_GROUP}} --subscription ${{secrets.AZURE_SUBSCRIPTION_ID}} --yes
-          echo "This is head branch"
