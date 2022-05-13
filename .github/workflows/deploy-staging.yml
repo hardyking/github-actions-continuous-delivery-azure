@@ -6,7 +6,7 @@ on:
 
 env:
   IMAGE_REGISTRY_URL: krisacr.azurecr.cn
-  AZURE_WEBAPP_NAME: kris-deployment-qa
+  AZURE_WEBAPP_NAME: kris-app-qa
 
 jobs:
   build:
